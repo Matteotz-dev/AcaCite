@@ -119,3 +119,24 @@ def test_api_client_surfaces_ollama_down_without_hiding_status(monkeypatch):
     monkeypatch.setattr("httpx.request", lambda *args, **kwargs: Response())
     with pytest.raises(ResearchAPIError, match="ollama_unavailable"):
         ResearchAPIClient().post("/v1/answer", {"query": "x"})
+
+
+def test_api_client_forwards_configured_token(monkeypatch):
+    captured = {}
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"status": "ok"}
+
+    def fake_request(*args, **kwargs):
+        captured.update(kwargs)
+        return Response()
+
+    monkeypatch.setenv("ACACITE_API_TOKEN", "expected")
+    monkeypatch.setattr("httpx.request", fake_request)
+
+    assert ResearchAPIClient().get("/v1/health") == {"status": "ok"}
+    assert captured["headers"] == {"Authorization": "Bearer expected"}

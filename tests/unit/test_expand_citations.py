@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import sqlite3
 
-from scripts.expand_citations import Work, extract_seed_references, looks_like_reference, safe_pdf_name
+from pathlib import Path
+
+from scripts.expand_citations import (
+    Work, extract_seed_references, looks_like_reference, safe_pdf_name, write_manifest,
+)
 
 
 def test_looks_like_reference_accepts_bibliographic_text():
@@ -67,3 +71,31 @@ def test_extract_seed_references_from_reference_heading(tmp_path):
     assert len(works) == 1
     assert works[0].depth == 1
     assert works[0].cited_by == ["Source Paper"]
+
+
+def test_manifest_reports_resolution_and_unresolved_references(tmp_path: Path):
+    output = tmp_path / "manifest"
+    works = {
+        "doi:10.1234/example": Work(
+            key="doi:10.1234/example",
+            depth=1,
+            title="Resolved Paper",
+            doi="10.1234/example",
+            pdf_path=str(tmp_path / "paper.pdf"),
+            status="openalex",
+        ),
+        "ref:missing": Work(
+            key="ref:missing",
+            depth=1,
+            raw_reference="Author, A. 2024. Missing paper title.",
+        ),
+    }
+
+    write_manifest(works, output)
+
+    markdown = output.with_suffix(".md").read_text(encoding="utf-8")
+    assert "- total works: 2" in markdown
+    assert "- resolved works: 1" in markdown
+    assert "- unresolved works: 1" in markdown
+    assert "- downloaded PDFs: 1" in markdown
+    assert "## Unresolved References" in markdown

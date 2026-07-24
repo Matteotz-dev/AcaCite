@@ -43,6 +43,10 @@ reports/citation-expansion/source-paper.md
 reports/citation-expansion/pdfs/*.pdf
 ```
 
+The Markdown report includes total, resolved, unresolved, and downloaded-PDF
+counts. Unresolved references are listed separately so you can inspect OCR,
+bibliography parsing, or Crossref/OpenAlex matching failures before ingestion.
+
 Use `--paper-title` more than once when the seed corpus has multiple source
 papers:
 

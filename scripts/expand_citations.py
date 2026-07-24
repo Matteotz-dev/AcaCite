@@ -237,11 +237,26 @@ def expand(seeds: list[Work], depth: int, timeout: float, polite_sleep: float) -
 def write_manifest(works: dict[str, Work], output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     ordered = sorted(works.values(), key=lambda item: (item.depth, item.title or item.key))
+    resolved = [work for work in ordered if work.doi or work.openalex_id]
+    unresolved = [work for work in ordered if not (work.doi or work.openalex_id)]
+    downloaded = [work for work in ordered if work.pdf_path]
     with output.with_suffix(".jsonl").open("w", encoding="utf-8") as handle:
         for work in ordered:
             handle.write(json.dumps(asdict(work), sort_keys=True) + "\n")
     with output.with_suffix(".md").open("w", encoding="utf-8") as handle:
         handle.write("# Citation Expansion\n\n")
+        handle.write("## Summary\n\n")
+        handle.write(f"- total works: {len(ordered)}\n")
+        handle.write(f"- resolved works: {len(resolved)}\n")
+        handle.write(f"- unresolved works: {len(unresolved)}\n")
+        handle.write(f"- downloaded PDFs: {len(downloaded)}\n\n")
+        if unresolved:
+            handle.write("## Unresolved References\n\n")
+            for work in unresolved[:50]:
+                reference = work.raw_reference[:240] or work.key
+                handle.write(f"- {reference}\n")
+            handle.write("\n")
+        handle.write("## Works\n\n")
         for work in ordered:
             title = work.title or work.raw_reference[:100] or work.key
             handle.write(f"- depth {work.depth}: **{title}**")
@@ -249,6 +264,8 @@ def write_manifest(works: dict[str, Work], output: Path) -> None:
                 handle.write(f" ({work.year})")
             if work.doi:
                 handle.write(f" DOI: `{work.doi}`")
+            if work.status:
+                handle.write(f" status: `{work.status}`")
             if work.pdf_path:
                 handle.write(f" PDF: `{work.pdf_path}`")
             handle.write("\n")
@@ -269,13 +286,22 @@ def main() -> int:
 
     seeds = extract_seed_references(args.database, args.paper_title)
     works = expand(seeds, args.depth, args.timeout, args.polite_sleep)
+    pdf_attempts = 0
     if args.download_oa_pdfs:
         pdf_dir = args.pdf_dir or args.output.parent / "pdfs"
         for work in works.values():
+            if work.pdf_url:
+                pdf_attempts += 1
             download_pdf(work, pdf_dir, args.timeout, args.max_pdf_mb * 1024 * 1024)
             time.sleep(args.polite_sleep)
     write_manifest(works, args.output)
-    print(f"Wrote {len(works)} works to {args.output.with_suffix('.jsonl')}")
+    resolved = sum(1 for work in works.values() if work.doi or work.openalex_id)
+    downloaded = sum(1 for work in works.values() if work.pdf_path)
+    print(
+        f"Wrote {len(works)} works to {args.output.with_suffix('.jsonl')} "
+        f"({resolved} resolved, {len(works) - resolved} unresolved, "
+        f"{downloaded}/{pdf_attempts} PDFs downloaded)"
+    )
     return 0
 
 

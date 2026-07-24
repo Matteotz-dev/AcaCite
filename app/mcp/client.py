@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import httpx
@@ -12,9 +13,17 @@ class ResearchAPIError(RuntimeError):
 
 
 class ResearchAPIClient:
-    def __init__(self, base_url: str = "http://127.0.0.1:8000", timeout: float = 180.0):
+    def __init__(
+        self,
+        base_url: str = "http://127.0.0.1:8000",
+        timeout: float = 180.0,
+        api_token: str | None = None,
+    ):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.api_token = (
+            api_token if api_token is not None else os.environ.get("ACACITE_API_TOKEN", "")
+        ).strip()
 
     def get(self, path: str) -> dict[str, Any]:
         return self._request("GET", path)
@@ -26,8 +35,10 @@ class ResearchAPIClient:
         self, method: str, path: str, payload: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         try:
+            headers = {"Authorization": f"Bearer {self.api_token}"} if self.api_token else None
             response = httpx.request(
-                method, f"{self.base_url}{path}", json=payload, timeout=self.timeout
+                method, f"{self.base_url}{path}", json=payload, timeout=self.timeout,
+                headers=headers,
             )
             response.raise_for_status()
             value = response.json()

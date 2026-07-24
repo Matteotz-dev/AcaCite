@@ -111,6 +111,10 @@ rag retry JOB_ID
 rag doctor
 ```
 
+`doctor` checks local package/configuration state, SQLite integrity, corpus
+counts, Qdrant mode, approved ingestion roots, API token wiring, API health, and
+MCP reachability. Use `--offline` to skip live process checks.
+
 Initial ingestion never interprets absent files as deletions. `sync` does:
 after a successful discovery pass, indexed sources below that root which are
 now absent are tombstoned and their current Qdrant points removed. Unchanged

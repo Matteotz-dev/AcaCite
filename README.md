@@ -17,6 +17,19 @@ Claude, Continue, or other MCP consumers inspect the returned evidence and
 synthesize answers themselves, without invoking a local answer model through
 MCP.
 
+## Why AcaCite?
+
+AcaCite keeps citation provenance in a small local system while leaving answer
+writing to the agent you already trust. The API owns ingestion, chunk identity,
+safe source paths, retrieval, and optional local generation. The MCP server is a
+thin retrieval transport: it returns evidence and source metadata, and it never
+routes requests through the local answer model.
+
+```text
+papers/repos/notes -> SQLite provenance + Qdrant retrieval -> MCP evidence
+                                                           -> Codex/Claude answer
+```
+
 ## Setup
 
 ```bash
