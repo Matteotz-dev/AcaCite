@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import re
+import time
 from typing import Any
+from pathlib import Path
 
 from app.config import get_settings
 from .client import ResearchAPIClient
@@ -40,6 +43,10 @@ def _filters(
         "dataset": dataset, "project": project,
         "source_type": source_type, "language": language,
     }.items() if value is not None}
+
+
+def _slug(text: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]+", "-", text.strip())[:80].strip("-") or "citation-expansion"
 
 
 def create_mcp(client: ResearchAPIClient | None = None, server_factory=None):
@@ -95,6 +102,48 @@ def create_mcp(client: ResearchAPIClient | None = None, server_factory=None):
     def research_related(chunk_id: str, limit: int = 5) -> dict[str, Any]:
         """Find indexed evidence related to an already authorized source chunk."""
         return api.post("/v1/related", {"chunk_id": chunk_id, "limit": limit})
+
+    @server.tool()
+    def research_expand_citations(
+        paper_title: str, depth: int = 2, download_oa_pdfs: bool = False,
+        output_dir: str = "reports/citation-expansion/mcp",
+    ) -> dict[str, Any]:
+        """Resolve first/second-hop bibliography papers without invoking an answer model."""
+        from scripts.expand_citations import (
+            download_pdf, expand, extract_seed_references, write_manifest,
+        )
+
+        depth = max(1, min(2, int(depth)))
+        output_root = Path(output_dir).expanduser()
+        output = output_root / _slug(paper_title)
+        seeds = extract_seed_references(settings.provenance_db_path, [paper_title])
+        works = expand(seeds, depth, timeout=20.0, polite_sleep=0.2)
+        pdf_dir = output_root / "pdfs"
+        if download_oa_pdfs:
+            for work in works.values():
+                download_pdf(work, pdf_dir, timeout=20.0, max_bytes=80 * 1024 * 1024)
+                time.sleep(0.2)
+        write_manifest(works, output)
+        resolved = [
+            {
+                "depth": work.depth,
+                "title": work.title,
+                "doi": work.doi,
+                "year": work.year,
+                "venue": work.venue,
+                "pdf_path": work.pdf_path,
+                "status": work.status,
+            }
+            for work in sorted(works.values(), key=lambda item: (item.depth, item.title or item.key))
+        ]
+        return {
+            "paper_title": paper_title,
+            "works": len(resolved),
+            "downloaded_pdfs": sum(1 for item in resolved if item["pdf_path"]),
+            "manifest_jsonl": str(output.with_suffix(".jsonl")),
+            "manifest_markdown": str(output.with_suffix(".md")),
+            "results": resolved[:50],
+        }
 
     @server.tool()
     def research_status() -> dict[str, Any]:

@@ -30,7 +30,7 @@ def _rig(tmp_path: Path):
         rag_data_root=tmp_path / "data", provenance_db_path=tmp_path / "provenance.sqlite3",
         qdrant_path=tmp_path / "qdrant", qdrant_collection="stage5", dense_embedding_dimensions=4,
         approved_ingestion_roots=(tmp_path,), dense_candidates=10, sparse_candidates=10,
-        rerank_candidates=10,
+        rerank_candidates=10, cognee_graph_enabled=True,
     )
     repository = ProvenanceRepository(settings.provenance_db_path)
     store = QdrantStore(QdrantClient(":memory:"), settings.qdrant_collection, 4)

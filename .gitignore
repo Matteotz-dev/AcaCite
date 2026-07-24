@@ -26,6 +26,7 @@ __pycache__/
 evaluation/fixtures/
 evaluation/gold/
 evaluation/reports/
+reports/
 IMPLEMENTATION_PLAN.md
 docs/BASELINE.md
 docs/PHASE*_HANDOFF.md

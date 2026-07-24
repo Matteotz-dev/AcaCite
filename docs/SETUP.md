@@ -49,6 +49,7 @@ research_search
 research_remember
 research_open_source
 research_related
+research_expand_citations
 research_status
 ```
 
@@ -82,6 +83,7 @@ Check jobs:
 ```bash
 .venv/bin/acacite status
 .venv/bin/acacite status --job JOB_ID
+.venv/bin/acacite doctor
 ```
 
 ## Query Evidence
@@ -97,6 +99,22 @@ curl -s http://127.0.0.1:8000/v1/search \
 `POST /v1/answer` is a direct HTTP endpoint that calls the configured local
 Ollama generator. It is separate from MCP and is not used by the retrieval-only
 agent workflow.
+
+## User Services
+
+Example `systemd --user` service files live in `deploy/systemd/`.
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp deploy/systemd/acacite-api.service ~/.config/systemd/user/
+cp deploy/systemd/acacite-mcp.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now acacite-api.service
+systemctl --user enable --now acacite-mcp.service
+```
+
+The examples assume the repository is checked out at `~/AcaCite`. Edit
+`WorkingDirectory`, `EnvironmentFile`, and `ExecStart` if your path differs.
 
 ## Public Exposure
 

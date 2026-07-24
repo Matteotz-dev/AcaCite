@@ -25,6 +25,16 @@ acacite-expand-citations \
   --download-oa-pdfs
 ```
 
+The same workflow is available through the main CLI:
+
+```bash
+acacite expand-citations \
+  --paper-title "My Source Paper Title" \
+  --output reports/citation-expansion/source-paper \
+  --depth 2 \
+  --download-oa-pdfs
+```
+
 Outputs:
 
 ```text
@@ -54,6 +64,21 @@ After reviewing the downloaded files:
 acacite ingest-dir reports/citation-expansion/pdfs \
   --dataset citation-expansion --project my-project
 ```
+
+Or ask the main CLI to submit the downloaded PDF directory to the running API:
+
+```bash
+acacite expand-citations \
+  --paper-title "My Source Paper Title" \
+  --output reports/citation-expansion/source-paper \
+  --depth 2 \
+  --download-oa-pdfs \
+  --ingest-downloaded \
+  --dataset citation-expansion --project my-project
+```
+
+MCP clients can call `research_expand_citations` for the same metadata/PDF
+discovery path. That MCP tool is retrieval-only and does not invoke Ollama.
 
 Keep the output directory under an approved ingestion root or update
 `APPROVED_INGESTION_ROOTS` before ingesting.

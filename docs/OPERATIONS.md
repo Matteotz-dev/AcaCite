@@ -70,12 +70,14 @@ reasoning are not persisted.
 
 ## MCP transport
 
-`cognee-research-mcp.service` exposes exactly six tools over MCP
-Streamable HTTP at `127.0.0.1:8001/mcp`. It is a thin client of the versioned
-API on `127.0.0.1:8000`; it owns no retrieval, citation, or ingestion state.
-Consequently, API validation and SQLite source authorization remain the single
-security boundary. See `docs/CONTINUE_MCP.md` for the verified Continue 2.0.0
-configuration and SSH topology.
+`acacite-mcp.service` exposes six retrieval-only tools over MCP Streamable HTTP
+at `127.0.0.1:8001/mcp`: `research_search`, `research_remember`,
+`research_open_source`, `research_related`, `research_expand_citations`, and
+`research_status`. It is a thin client of the versioned API on
+`127.0.0.1:8000` plus local citation-expansion metadata utilities; it owns no
+answer-generation state. Consequently, API validation and SQLite source
+authorization remain the single security boundary. Example user service files
+are in `deploy/systemd/`.
 
 ## Failure recovery and evaluation
 
@@ -106,6 +108,7 @@ rag sync /absolute/papers --kind directory --dataset DATASET --project PROJECT
 rag status
 rag status --job JOB_ID
 rag retry JOB_ID
+rag doctor
 ```
 
 Initial ingestion never interprets absent files as deletions. `sync` does:

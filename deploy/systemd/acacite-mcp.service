@@ -1,0 +1,14 @@
+[Unit]
+Description=AcaCite retrieval-only MCP server
+After=network.target acacite-api.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/AcaCite
+EnvironmentFile=%h/AcaCite/.env
+ExecStart=%h/AcaCite/.venv/bin/acacite-mcp
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

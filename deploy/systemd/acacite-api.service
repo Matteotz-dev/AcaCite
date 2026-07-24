@@ -1,0 +1,14 @@
+[Unit]
+Description=AcaCite HTTP API
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/AcaCite
+EnvironmentFile=%h/AcaCite/.env
+ExecStart=%h/AcaCite/.venv/bin/uvicorn server:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

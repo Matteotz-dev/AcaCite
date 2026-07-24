@@ -33,6 +33,7 @@ class FakeMCP:
             "research_remember": ("content", "source_uri", "dataset"),
             "research_open_source": ("chunk_id",),
             "research_related": ("chunk_id",),
+            "research_expand_citations": ("paper_title",),
             "research_status": (),
         }
         return [
@@ -61,10 +62,11 @@ def test_mcp_exposes_retrieval_only_tools():
     tools = asyncio.run(create_mcp(FixtureClient(), server_factory=FakeMCP).list_tools())
     assert {tool.name for tool in tools} == {
         "research_search", "research_remember", "research_open_source",
-        "research_related", "research_status",
+        "research_related", "research_expand_citations", "research_status",
     }
     schemas = {tool.name: tool.inputSchema for tool in tools}
     assert "query" in schemas["research_search"]["required"]
+    assert "paper_title" in schemas["research_expand_citations"]["required"]
     assert "research_answer" not in schemas
     assert set(schemas["research_remember"]["required"]) == {
         "content", "source_uri", "dataset"

@@ -12,6 +12,7 @@ research_search
 research_remember
 research_open_source
 research_related
+research_expand_citations
 research_status
 ```
 
@@ -23,6 +24,10 @@ local LLM. The intended flow is:
 3. The agent reads those chunks and synthesizes the answer with its own model.
 
 This keeps local retrieval independent from local generation.
+
+`research_expand_citations` follows the same rule. It uses local provenance plus
+Crossref/OpenAlex metadata to resolve first-hop and second-hop cited papers, and
+can download open-access PDFs, but it does not call a local answer model.
 
 ## HTTP API
 
