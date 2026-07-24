@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
-
 from app.config import get_settings
 from .client import ResearchAPIClient
 
@@ -44,10 +42,14 @@ def _filters(
     }.items() if value is not None}
 
 
-def create_mcp(client: ResearchAPIClient | None = None) -> FastMCP:
+def create_mcp(client: ResearchAPIClient | None = None, server_factory=None):
     settings = get_settings()
     api = client or ResearchAPIClient()
-    server = FastMCP(
+    if server_factory is None:
+        from mcp.server.fastmcp import FastMCP
+
+        server_factory = FastMCP
+    server = server_factory(
         "acacite",
         instructions=(
             "Use research_search when you will inspect and reason over evidence yourself. "
@@ -102,11 +104,18 @@ def create_mcp(client: ResearchAPIClient | None = None) -> FastMCP:
     return server
 
 
-mcp = create_mcp()
+_mcp = None
+
+
+def get_mcp():
+    global _mcp
+    if _mcp is None:
+        _mcp = create_mcp()
+    return _mcp
 
 
 def main() -> None:
-    mcp.run(transport="streamable-http")
+    get_mcp().run(transport="streamable-http")
 
 
 if __name__ == "__main__":

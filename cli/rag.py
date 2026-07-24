@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import json
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -13,7 +14,7 @@ BASE_URL = "http://127.0.0.1:8000"
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="rag")
+    parser = argparse.ArgumentParser(prog="acacite")
     parser.add_argument("--base-url", default=BASE_URL)
     commands = parser.add_subparsers(dest="command", required=True)
     for name in ("ingest-repo", "ingest-dir", "sync"):
@@ -52,9 +53,13 @@ def main() -> int:
 
 def request(base_url: str, method: str, path: str, payload: dict | None = None):
     data = json.dumps(payload).encode() if payload is not None else None
+    headers = {"Content-Type": "application/json"}
+    token = os.environ.get("ACACITE_API_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     request = Request(
         base_url.rstrip("/") + path, data=data, method=method,
-        headers={"Content-Type": "application/json"},
+        headers=headers,
     )
     with urlopen(request, timeout=3600) as response:
         return json.load(response)

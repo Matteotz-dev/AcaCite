@@ -119,4 +119,4 @@ creates a new job containing only failed paths and links it through
 If a process interruption leaves a job marked `running`, rerun the same ingest
 or sync command: content-addressed versions and point IDs make it idempotent.
 For a failed/partial completed job, prefer `rag retry JOB_ID`. Inspect API logs
-with `journalctl --user -u cognee-research-memory.service -n 100`.
+with `journalctl --user -u acacite-api.service -n 100`.

@@ -8,6 +8,42 @@ from app.mcp.client import ResearchAPIClient, ResearchAPIError
 from app.mcp.server import _compact_search_response, create_mcp
 
 
+class Tool:
+    def __init__(self, name, required=(), properties=()):
+        self.name = name
+        self.inputSchema = {
+            "required": list(required),
+            "properties": {name: {} for name in properties},
+        }
+
+
+class FakeMCP:
+    def __init__(self, *_args, **_kwargs):
+        self.tools = {}
+
+    def tool(self):
+        def decorate(func):
+            self.tools[func.__name__] = func
+            return func
+        return decorate
+
+    async def list_tools(self):
+        required = {
+            "research_search": ("query",),
+            "research_remember": ("content", "source_uri", "dataset"),
+            "research_open_source": ("chunk_id",),
+            "research_related": ("chunk_id",),
+            "research_status": (),
+        }
+        return [
+            Tool(name, required=required.get(name, ()))
+            for name in self.tools
+        ]
+
+    async def call_tool(self, name, arguments):
+        return self.tools[name](**arguments)
+
+
 class FixtureClient:
     def __init__(self):
         self.calls = []
@@ -22,7 +58,7 @@ class FixtureClient:
 
 
 def test_mcp_exposes_retrieval_only_tools():
-    tools = asyncio.run(create_mcp(FixtureClient()).list_tools())
+    tools = asyncio.run(create_mcp(FixtureClient(), server_factory=FakeMCP).list_tools())
     assert {tool.name for tool in tools} == {
         "research_search", "research_remember", "research_open_source",
         "research_related", "research_status",
@@ -60,7 +96,7 @@ def test_search_response_drops_index_metadata_but_keeps_citable_evidence():
 
 def test_tool_translation_preserves_source_id():
     client = FixtureClient()
-    server = create_mcp(client)
+    server = create_mcp(client, server_factory=FakeMCP)
     asyncio.run(server.call_tool("research_open_source", {
         "chunk_id": "8a70f5b5-bfe6-4ff7-a42d-b02db98befa8"
     }))

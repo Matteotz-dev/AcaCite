@@ -9,7 +9,8 @@ from uuid import UUID
 import shared_memory  # Configures durable storage before other Cognee imports.
 import cognee
 from cognee import SearchType
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 
@@ -18,6 +19,34 @@ app = FastAPI(
     description="Model-independent retrieval and ingestion for local research corpora.",
     version="0.1.0",
 )
+
+
+@lru_cache(maxsize=1)
+def _api_token() -> str | None:
+    from app.config import get_settings
+
+    token = get_settings().acacite_api_token
+    return token.strip() if token and token.strip() else None
+
+
+def _authorized_api_token(headers, expected: str) -> bool:
+    auth = headers.get("Authorization", "")
+    bearer = auth.removeprefix("Bearer ").strip() if auth.startswith("Bearer ") else ""
+    supplied = bearer or headers.get("X-AcaCite-Token", "")
+    return supplied == expected
+
+
+@app.middleware("http")
+async def optional_token_auth(request: Request, call_next):
+    token = _api_token()
+    if not token or request.url.path in {"/docs", "/openapi.json", "/redoc"}:
+        return await call_next(request)
+    if not _authorized_api_token(request.headers, token):
+        return JSONResponse(
+            status_code=401,
+            content={"detail": {"code": "unauthorized", "message": "AcaCite API token required"}},
+        )
+    return await call_next(request)
 
 
 class RememberRequest(BaseModel):

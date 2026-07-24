@@ -6,7 +6,9 @@ from pydantic import ValidationError
 from app.config import Settings
 
 
-def test_defaults_are_local_and_side_effect_free(tmp_path: Path) -> None:
+def test_defaults_are_local_and_side_effect_free(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ("RAG_DATA_ROOT", "PROVENANCE_DB_PATH", "QDRANT_PATH", "APPROVED_INGESTION_ROOTS"):
+        monkeypatch.delenv(name, raising=False)
     data_root = tmp_path / "data"
     settings = Settings(_env_file=None, rag_data_root=data_root)
 

@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     default_generator_model: str = "qwen3.6:27b"
     ollama_generation_timeout_seconds: float = Field(default=120.0, gt=0, le=900)
     default_generation_temperature: float = Field(default=0.0, ge=0, le=2)
+    acacite_api_token: str | None = None
     rag_api_host: str = "127.0.0.1"
     rag_api_port: int = Field(default=8000, ge=1, le=65535)
     mcp_host: str = "127.0.0.1"

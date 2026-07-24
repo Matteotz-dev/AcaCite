@@ -12,6 +12,7 @@ htmlcov/
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
 *.sqlite
 *.sqlite3
 *.db

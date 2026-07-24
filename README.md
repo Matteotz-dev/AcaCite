@@ -20,8 +20,9 @@ MCP.
 ## Setup
 
 ```bash
-conda create -p .venv python=3.12 pip -y
-.venv/bin/python -m pip install -r requirements.txt
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+cp .env.example .env
 ```
 
 Ensure Ollama is active:
@@ -29,6 +30,15 @@ Ensure Ollama is active:
 ```bash
 ollama serve
 ```
+
+See [docs/SETUP.md](docs/SETUP.md) for the full local setup, service startup,
+MCP client, ingestion, and query workflow.
+See [docs/QUICKSTART.md](docs/QUICKSTART.md) for a minimal example corpus
+walkthrough.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the HTTP API versus
+retrieval-only MCP split.
+See [docs/CITATION_EXPANSION.md](docs/CITATION_EXPANSION.md) for pulling cited
+papers and second-hop cited papers from an indexed bibliography.
 
 Run the end-to-end test:
 
@@ -86,12 +96,12 @@ consume the same `/retrieve` results.
 You can also install the API and MCP server as user services, for example:
 
 ```bash
-systemctl --user status cognee-research-memory.service
-systemctl --user restart cognee-research-memory.service
+systemctl --user status acacite-api.service
+systemctl --user restart acacite-api.service
 ```
 
 The separate localhost-only MCP transport is
-`cognee-research-mcp.service` at `http://127.0.0.1:8001/mcp`. Its tools are
+`acacite-mcp.service` at `http://127.0.0.1:8001/mcp`. Its tools are
 retrieval-only; agent clients synthesize answers themselves from returned
 evidence and do not invoke the local Ollama generator through MCP.
 
